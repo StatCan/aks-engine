@@ -1,25 +1,29 @@
 ﻿#
-# Optional parameters to this script file.
+# Join Windows to a Domain
 #
 
 [CmdletBinding()]
 param(
-    # comma- or semicolon-separated list of Chocolatey packages.
+    [Parameter(Mandatory = $true)]
     [string] $DomainName,
+    [Parameter(Mandatory = $true)]
     [string] $JoinUser,
+    [Parameter(Mandatory = $true)]
     [string] $JoinPassword,
+    [Parameter(Mandatory = $true)]
     [string] $OU,
     [int] $PSVersionRequired = 3
 )
 
 ###################################################################################################
+
 $JoinPasswordSecure = ConvertTo-SecureString $JoinPassword -AsPlainText -Force
 
 $credential = New-Object System.Management.Automation.PSCredential($JoinUser, $JoinPasswordSecure)
 if($OU) {
-    [Microsoft.PowerShell.Commands.ComputerChangeInfo]$computerChangeInfo = Add-Computer -ComputerName $VmName -DomainName $DomainName -Credential $credential -OUPath $OU -Force -PassThru
+    [Microsoft.PowerShell.Commands.ComputerChangeInfo]$computerChangeInfo = Add-Computer -ComputerName $env:COMPUTERNAME -DomainName $DomainName -Credential $credential -OUPath $OU -Force -PassThru
 } else {
-    [Microsoft.PowerShell.Commands.ComputerChangeInfo]$computerChangeInfo = Add-Computer -ComputerName $VmName -DomainName $DomainName -Credential $credential -Force -PassThru
+    [Microsoft.PowerShell.Commands.ComputerChangeInfo]$computerChangeInfo = Add-Computer -ComputerName $env:COMPUTERNAME -DomainName $DomainName -Credential $credential -Force -PassThru
 }
 if ($computerChangeInfo.HasSucceeded)
 {
