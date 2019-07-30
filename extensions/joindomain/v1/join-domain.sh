@@ -132,6 +132,18 @@ then
     echo "prepend domain-search \"${DOMAINNAME}\";" >> /etc/dhcp/dhclient.conf
 fi
 
+if [ -f /etc/netplan/50-cloud-init.yaml ]; then
+    if ! grep -Fq "${DOMAINNAME}" /etc/netplan/50-cloud-init.yaml; then
+        echo $(date) " - Add domain to netplan config"
+
+        echo "            nameservers:" >> /etc/netplan/50-cloud-init.yaml
+        echo "                search: [ ${DOMAINNAME} ]" >> /etc/netplan/50-cloud-init.yaml
+
+        # Disable cloud-init updates to the file
+        echo "network: {config: disabled}" > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+    fi
+fi
+
 # Join the domain
 echo -n "$AD_JOIN_PASSWORD" | adcli join --stdin-password --domain-ou="$AD_OU" --login-user=$AD_JOIN_USER -S "$AD_SERVER" "$DOMAINNAME"
 
@@ -141,3 +153,7 @@ systemctl restart sssd
 # service networking restart
 echo $(date) " - Restarting network"
 sudo ifdown eth0 && sudo ifup eth0
+
+if [ -d /etc/netplan ]; then
+    netplan apply
+fi
