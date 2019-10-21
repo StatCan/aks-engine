@@ -133,11 +133,20 @@ then
 fi
 
 if [ -f /etc/netplan/50-cloud-init.yaml ]; then
+    add-apt-repository ppa:rmescandon/yq
+    apt_get_update
+    apt_get_install 20 30 120 yq
+
     if ! grep -Fq "${DOMAINNAME}" /etc/netplan/50-cloud-init.yaml; then
         echo $(date) " - Add domain to netplan config"
 
-        echo "            nameservers:" >> /etc/netplan/50-cloud-init.yaml
-        echo "                search: [ ${DOMAINNAME} ]" >> /etc/netplan/50-cloud-init.yaml
+        echo "network:" > /tmp/netplan-mod.yaml
+        echo "    ethernets:"  >> /tmp/netplan-mod.yaml
+        echo "        eth0:"  >> /tmp/netplan-mod.yaml
+        echo "            nameservers:" >> /tmp/netplan-mod.yaml
+        echo "                search: [ ${DOMAINNAME} ]" >> /tmp/netplan-mod.yaml
+
+        yq merge -i /etc/netplan/50-cloud-init.yaml /tmp/netplan-mod.yaml
 
         # Disable cloud-init updates to the file
         echo "network: {config: disabled}" > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
